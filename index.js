@@ -21,6 +21,7 @@ const wins = {
   errorWindow: null
 }
 
+const userDataDir = path.join(__dirname, 'user-data')
 const publicDir = path.join(__dirname, 'bfx-report-ui/build')
 const loadURL = serve({ directory: publicDir })
 
@@ -46,10 +47,16 @@ const createMenu = () => {
     {
       label: 'Application',
       submenu: [
-        { label: 'Quit', accelerator: 'CmdOrCtrl+Q', click: () => app.quit() },
+        {
+          label: 'Quit',
+          accelerator: 'CmdOrCtrl+Q',
+          click: () => app.quit()
+        },
         { type: 'separator' },
         {
-          label: 'Open dev tools', accelerator: 'CmdOrCtrl+D', click: () => {
+          label: 'Open dev tools',
+          accelerator: 'CmdOrCtrl+D',
+          click: () => {
             if (!wins.mainWindow) {
               return
             }
@@ -58,7 +65,9 @@ const createMenu = () => {
           }
         },
         {
-          label: 'Refresh page', accelerator: 'CmdOrCtrl+R', click: () => {
+          label: 'Refresh page',
+          accelerator: 'CmdOrCtrl+R',
+          click: () => {
             if (!wins.mainWindow) {
               return
             }
@@ -107,6 +116,7 @@ const createWindow = (
     manage
   } = isMainWindow
     ? windowStateKeeper({
+      path: userDataDir,
       defaultWidth,
       defaultHeight
     })
