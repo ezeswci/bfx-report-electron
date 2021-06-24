@@ -7,6 +7,7 @@ const url = require('url')
 
 const { BrowserWindow } = electron
 const isDevEnv = process.env.NODE_ENV === 'development'
+const isMac = process.platform === 'darwin'
 
 const wins = require('./windows')
 const ipcs = require('./ipcs')
@@ -19,6 +20,7 @@ const {
 } = require('./change-loading-win-visibility-state')
 const {
   showWindow,
+  hideWindow,
   centerWindow
 } = require('./helpers/manage-window')
 
@@ -101,7 +103,16 @@ const _createWindow = async (
     }
   })
 
-  await wins[winName].loadURL(startUrl)
+  const isReadyToShowPromise = new Promise((resolve) => {
+    wins[winName].once('ready-to-show', resolve)
+  })
+  const didFinishLoadPromise = wins[winName]
+    .loadURL(startUrl)
+
+  await Promise.all([
+    isReadyToShowPromise,
+    didFinishLoadPromise
+  ])
 
   const res = {
     isMaximized,
@@ -151,8 +162,14 @@ const _createChildWindow = async (
       y,
       resizable: false,
       center: true,
-      parent: wins.mainWindow,
       frame: false,
+
+      // TODO: The reason for it related to the electronjs issue:
+      // `[Bug]: Wrong main window hidden state on macOS when using 'parent' option`
+      // https://github.com/electron/electron/issues/29732
+      parent: isMac ? null : wins.mainWindow,
+      alwaysOnTop: isMac,
+
       ...opts
     }
   )
@@ -178,6 +195,18 @@ const createMainWindow = async ({
     manage,
     isMaximized
   } = winProps
+
+  win.on('closed', () => {
+    if (
+      wins.loadingWindow &&
+      typeof wins.loadingWindow === 'object' &&
+      !wins.loadingWindow.isDestroyed()
+    ) {
+      wins.loadingWindow.close()
+    }
+
+    wins.loadingWindow = null
+  })
 
   if (isDevEnv) {
     wins.mainWindow.webContents.openDevTools()
@@ -231,6 +260,7 @@ const createErrorWindow = async (pathname) => {
   )
 
   await hideLoadingWindow()
+  await hideWindow(wins.mainWindow)
 
   return winProps
 }

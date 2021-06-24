@@ -189,6 +189,11 @@ fi
 
 cd $unpackedFolder
 
+if [ $targetPlatform == "win" ]
+then
+  touch "$isZipReleaseFile"
+fi
+
 if [ $targetPlatform == "linux" ]
 then
   # Build C executable launcher file
@@ -223,7 +228,7 @@ cd $ROOT
 
 if [ $targetPlatform == "mac" ]
 then
-  node $ROOT/scripts/generate-zipand-blockmap.js
+  node $ROOT/scripts/node/generate-zipand-blockmap.js
 fi
 
 rm -rf /dist/*$targetPlatform*
